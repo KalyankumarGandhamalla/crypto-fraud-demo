@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import select
 from dotenv import load_dotenv
-from db_init import SessionLocal, init_db
+from backend.db_init import SessionLocal, init_db
 from models import FraudReport, Investigation
 
 # ---------------------------
