@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Investigator Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #007bff;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .actions {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .actions input {
+      width: 400px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .actions button {
+      padding: 10px 20px;
+      margin: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    .actions button:hover {
+      background: #0056b3;
+    }
+    .card {
+      padding: 15px;
+      margin: 15px 0;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+    h2 {
+      color: #333;
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    table th, table td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+      font-size: 14px;
+    }
+    table th {
+      background: #f1f1f1;
+    }
+    .suspicious {
+      margin-top: 20px;
+      padding: 12px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 6px;
+    }
+    footer {
+      margin-top: 30px;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <header>🔍 Investigator Dashboard</header>
+  
+  <div class="container">
+    <div class="actions">
+      <input type="text" id="walletInput" placeholder="Enter Ethereum wallet address">
+      <button onclick="fetchWalletDetails()">Check Wallet</button>
+      <button onclick="clearDashboard()">Clear</button>
+      <button onclick="window.location.href='admin.html'">⬅ Back to Admin</button>
+    </div>
+
+    <div id="walletDetails" style="display:none;">
+      <div class="card">
+        <h2>Wallet Information</h2>
+        <p><b>Address:</b> <span id="walletAddress"></span></p>
+        <p><b>Balance:</b> <span id="walletBalance"></span> ETH</p>
+        <p><b>Total Transactions:</b> <span id="txCount"></span></p>
+      </div>
+
+      <div class="card">
+        <h2>Transactions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Hash</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Value (ETH)</th>
+              <th>Asset</th>
+              <th>Category</th>
+              <th>Block</th>
+            </tr>
+          </thead>
+          <tbody id="transactionsTable"></tbody>
+        </table>
+      </div>
+
+      <div id="suspiciousActivity" class="suspicious" style="display:none;">
+        <h2>⚠️ Suspicious Activity</h2>
+        <ul id="suspiciousList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 Crypto Fraud Demo | Investigator Panel</footer>
+
+  <script>
+    async function fetchWalletDetails() {
+      const address = document.getElementById("walletInput").value.trim();
+      if (!address) {
+        alert("Please enter a wallet address");
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/wallet/${address}`);
+        const data = await res.json();
+
+        console.log("API Response:", data);
+
+        document.getElementById("walletDetails").style.display = "block";
+        document.getElementById("walletAddress").textContent = data.address;
+        document.getElementById("walletBalance").textContent = data.balance_eth.toFixed(6);
+        document.getElementById("txCount").textContent = data.tx_count;
+
+        // Transactions
+        const tbody = document.getElementById("transactionsTable");
+        tbody.innerHTML = "";
+        data.transactions.forEach(tx => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><a href="https://etherscan.io/tx/${tx.hash}" target="_blank">${tx.hash?.slice(0,10)}...</a></td>
+            <td>${tx.from || "-"}</td>
+            <td>${tx.to || "-"}</td>
+            <td>${tx.value_eth || 0}</td>
+            <td>${tx.asset || "-"}</td>
+            <td>${tx.category || "-"}</td>
+            <td>${tx.blockNum || "-"}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Suspicious activity
+        const suspiciousDiv = document.getElementById("suspiciousActivity");
+        const list = document.getElementById("suspiciousList");
+        list.innerHTML = "";
+        if (data.suspicious && data.suspicious.length > 0) {
+          suspiciousDiv.style.display = "block";
+          data.suspicious.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = `${item.reason || "Suspicious"} - ${item.txhash || ""}`;
+            list.appendChild(li);
+          });
+        } else {
+          suspiciousDiv.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Error fetching wallet details:", err);
+        alert("Error fetching wallet details. Check backend.");
+      }
+    }
+
+    function clearDashboard() {
+      document.getElementById("walletInput").value = "";
+      document.getElementById("walletDetails").style.display = "none";
+    }
+  </script>
+</body>
+</html>

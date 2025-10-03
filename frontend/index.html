@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Report Fraud</title>
+  <link rel="stylesheet" href="static/app.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Report a Fraudulent Wallet</h1>
+    <form id="reportForm">
+      <label>Your Name</label>
+      <input type="text" id="reporter_name"/>
+
+      <label>Wallet Address(es)</label>
+      <input type="text" id="wallets" placeholder="0x123..." required />
+
+      <label>Fraud Type</label>
+      <select id="fraud_type">
+        <option value="scam">Scam</option>
+        <option value="phishing">Phishing</option>
+        <option value="rug pull">Rug Pull</option>
+        <option value="hack">Hack</option>
+        <option value="other">Other</option>
+      </select>
+
+      <label>Description</label>
+      <textarea id="description" rows="3"></textarea>
+
+      <label>Attachment (optional link)</label>
+      <input type="text" id="attachment" placeholder="http://..." />
+
+      <button type="submit">Submit Report</button>
+    </form>
+
+    <p><a href="admin.html">Admin Panel</a> | <a href="investigator.html">Investigator</a></p>
+  </div>
+
+  <script>
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        reporter_name: document.getElementById('reporter_name').value,
+        wallets: document.getElementById('wallets').value,
+        fraud_type: document.getElementById('fraud_type').value,
+        description: document.getElementById('description').value,
+        attachment: document.getElementById('attachment').value
+      };
+
+      try {
+        const res = await fetch('http://127.0.0.1:5000/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ Report submitted! Case ID: ' + data.id);
+          e.target.reset();
+        } else {
+          alert('❌ Error: ' + JSON.stringify(data));
+        }
+      } catch (err) {
+        console.error(err);
+        alert('⚠️ Failed to submit report. Check backend.');
+      }
+    });
+  </script>
+</body>
+</html>

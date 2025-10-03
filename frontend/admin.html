@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="static/app.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Admin - Case Management</h1>
+    <button id="refresh">Refresh Reports</button>
+    <table id="reportsTable">
+      <thead><tr><th>ID</th><th>Wallets</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <p><a href="index.html">Report Page</a> | <a href="investigator.html">Investigator</a></p>
+  </div>
+
+  
+  <script>
+    async function loadReports(){
+      const res = await fetch('http://localhost:5000/api/reports');
+      const data = await res.json();
+      const tbody = document.querySelector('#reportsTable tbody');
+      tbody.innerHTML = '';
+      (data || []).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.id}</td>
+          <td>${r.wallets}</td>
+          <td>${r.fraud_type}</td>
+          <td>${r.status}</td>
+          <td>${new Date(r.created_at).toLocaleString()}</td>
+          <td>
+            <select data-id="${r.id}" class="statusSelect">
+              <option ${r.status==='Pending'?'selected':''}>Pending</option>
+              <option ${r.status==='In-Review'?'selected':''}>In-Review</option>
+              <option ${r.status==='Closed'?'selected':''}>Closed</option>
+            </select>
+            <button class="linkInv" data-id="${r.id}">Link → Investigator</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+      document.querySelectorAll('.statusSelect').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+          const id = e.target.dataset.id;
+          const status = e.target.value;
+          const res = await fetch(`http://localhost:5000/api/reports/${id}/status`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({status})
+          });
+          if (!res.ok) alert('Failed to update');
+        });
+      });
+      document.querySelectorAll('.linkInv').forEach(btn => {
+        btn.addEventListener('click', (e)=>{
+          const id = e.target.dataset.id;
+          // open investigator and prefill report id (simple UX)
+          window.open(`investigator.html?report_id=${id}`, '_blank');
+        });
+      });
+    }
+
+    document.getElementById('refresh').addEventListener('click', loadReports);
+    // initial load
+    loadReports();
+  </script>
+</body>
+</html>
